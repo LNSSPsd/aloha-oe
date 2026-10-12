@@ -1,0 +1,87 @@
+aloha-oe -- a musical toy
+
+aloha-oe plays Aloha 'Oe, with synthesized instruments and an optional
+singing voice.  It can also write the result to a stereo WAV file.  The
+score and instrument definitions are compiled into the program; there
+are no data files to install.
+
+The arrangement takes its key, pace and principal instrumentation from
+Johnny Cash's recording on American VI: Ain't No Grave.  The melody was
+checked against early printed editions and an independent transcription.
+The instruments use additive synthesis.  The voice uses a glottal source
+and moving formants, with a small phoneme interpreter for articulation.
+All sound is calculated by the program.  No recorded samples are used.
+
+BUILDING
+
+You need a C11 compiler, make, and the system development headers.  The
+command-line parser uses getopt_long().  Audio output uses native system
+interfaces; no separate audio library is required.
+
+        make
+        make check
+        ./aloha-oe
+
+See INSTALL for compiler options, installation and cross-compilation.
+The checks do not open an audio device.
+
+USING IT
+
+The default is an instrumental performance in E major, lasting about
+three minutes.  To add the voice, or save a performance:
+
+        ./aloha-oe -e
+        ./aloha-oe -e -s chorus --seconds 24
+        ./aloha-oe -ne -o aloha.wav
+        ./aloha-oe -ne --voice-style retro -o retro.wav
+
+The -e option plays the voice and melody instrument together.  Use -V
+for voice with accompaniment, or -m instrumental for instruments alone.
+The voice is deliberately simple; some words are only just intelligible.
+
+Tempo is measured in printed quarter notes.  The default is 49 beats
+per minute, with an eighth-note accompaniment at 98.  Setting -b 98
+doubles the speed.  The -v option sets the peak level of the generated
+signal; it does not change the system mixer.
+
+Words are printed as they are sung in vocal and ensemble modes.  Use
+--no-lyrics to suppress them, or -l to show them during an instrumental
+performance.  Lyrics go to standard output; diagnostics go to standard
+error.  The -n option disables playback and lyric output.
+
+Run ./aloha-oe -h for a list of options.  The aloha-oe(6) manual describes
+individual parts, score export, phoneme input and device selection:
+
+        man ./doc/aloha-oe.6
+
+PORTABILITY
+
+Audio backends are supplied for Darwin, FreeBSD, DragonFly BSD, Linux,
+Windows, NetBSD and OpenBSD.  The Darwin backend has been built and run
+on macOS (arm64).  The other backends have not yet been tested on their
+target systems.  See doc/PORTING for details and remaining restrictions.
+
+Linux and OpenBSD use audio device nodes directly.  A sound server may
+already have the device open.  Choose a suitable device with -d, or use
+-n -o to write a WAV file.  Unsupported systems can still render files.
+
+The program renders the whole selection before starting playback.  A
+full performance at 48000 Hz needs about 69 MB for its sample buffer.
+
+THE SOURCE TREE
+
+        src/            score, synthesis, command line and file output
+        src/audio/      native PCM playback backends
+        doc/            manual, implementation notes and references
+
+The source distribution contains no executable or example recordings.
+Generated files are not build inputs.  Run make check for the built-in
+score and synthesis checks.
+
+doc/NOTES explains the arrangement and synthesis.  doc/REFERENCES lists
+the score editions, recording notes and algorithm references.  COPYING
+contains the MIT license and the composition credit.
+
+Bug reports should include the operating system, compiler, command line
+and complete diagnostic.  For an audio problem, include the device name
+and whether writing a WAV file succeeds.

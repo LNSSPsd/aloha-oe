@@ -1,0 +1,168 @@
+Porting aloha-oe
+===============
+
+The renderer is ordinary C.  The only platform-dependent part of audio
+output is in src/audio/.  The score, synthesizer, command-line parser,
+and WAVE writer do not include native audio headers.
+
+The code requires C11, the C and math libraries, and getopt_long(3).
+The Darwin backend also uses C11 atomics.  Unix builds need a monotonic
+clock and nanosleep(2); the Windows backend uses the corresponding
+Win32 facilities.  The makefile is intended for GNU make and BSD make,
+with a Bourne-compatible shell for its recipes.
+
+There is no configure script.  Compiler target macros select a backend.
+All backend translation units are built, but their guards leave exactly
+one definition of pcm_play().  The make variable SYSTEM selects native
+linker flags; it does not change the compiler's target.  Use an appropriate
+CC and SYSTEM together when cross-compiling.  Clean the object files
+before changing targets or compile-time options.  See INSTALL for commands.
+
+No third-party audio or speech library is needed.  Platform SDKs, system
+headers, and the compiler's runtime are build requirements.  They are not
+bundled with this distribution.
+
+Status
+------
+
+Build and playback have been tested on macOS (arm64).  The other
+backends have not yet been tested on their target systems.  Driver
+support for the requested format must be checked at run time.
+
+Ports
+-----
+
+  darwin.c     AudioQueue, with three interleaved stereo float buffers.
+               Links AudioToolbox and CoreFoundation.  A device argument
+               is a CoreAudio UID.  Queue drain completion is determined
+               from IsRunning after AudioQueueStop(false), not merely
+               from a buffer becoming available for reuse.
+
+  oss.c        FreeBSD and DragonFly BSD OSS, using /dev/dsp and the
+               SNDCTL_DSP_* ioctls.  Writes signed 16-bit little-endian
+               stereo PCM.  Progress uses submitted bytes less GETODELAY;
+               SYNC completes the drain.  A device argument is a pathname.
+
+  linux.c      The ALSA kernel PCM interface in <sound/asound.h>.
+               Opens /dev/snd/pcmC0D0p unless given another pathname.
+               There is no libasound dependency, plugin handling, or
+               interpretation of names such as "hw:0".  The device must
+               accept interleaved stereo S16_LE at the requested rate,
+               5--40 ms periods, and a 50--250 ms buffer.  Hardware format
+               negotiation is exact; no software resampler is supplied.
+               A nonblocking drain is followed until SETUP state.
+               An underrun is an error, rather than a reason to restart
+               silently with an altered playback timeline.
+
+  winmm.c      The system waveOut API, linked with -lwinmm.  The default
+               device is WAVE_MAPPER; a device argument is a decimal
+               waveOut device number.  The port uses prepared PCM16
+               buffers and event notification.  Position comes from
+               waveOutGetPosition when available, otherwise from completed
+               buffers.  Buffer headers and data remain alive until the
+               driver releases them.
+
+  netbsd.c     NetBSD 9 or later, using <sys/audioio.h>, AUDIO_SETINFO,
+               AUDIO_GETBUFINFO, and AUDIO_DRAIN.  The default pathname
+               is /dev/audio.  This port relies on play.seek being a byte
+               count, as documented for NetBSD 9 and later.  Progress is
+               the track's consumption position; mixing and hardware
+               buffering can add latency after it.  The final partial
+               block is passed to the blocking system drain.
+
+  openbsd.c    The native audioio API, using AUDIO_SETPAR and AUDIO_GETPOS.
+               The default pathname is /dev/audio0.  Playback starts
+               after a complete buffer has been filled.  Padding allows
+               the final data block to finish before AUDIO_STOP.
+               Progress follows the device byte counter.  An underrun
+               terminates playback to preserve the lyric timeline.
+
+  null.c       The fallback for an unsupported target.  Reports that live
+               playback is unavailable.  Rendering and WAVE export still
+               work when --no-play is given, provided the common code
+               builds on that target.
+
+On Linux, -DALOHA_USE_OSS selects oss.c instead of linux.c when the system
+provides a working OSS device and <sys/soundcard.h>.  This is a compile-time
+choice, not an automatic fallback from a busy or incompatible ALSA device.
+
+The direct device backends do not negotiate access with desktop sound
+servers.  A busy or inaccessible device is reported as an error.  Choose
+an available device or use WAVE export; the program does not stop another
+process to acquire the hardware.
+
+Windows builds
+--------------
+
+The Windows target uses MinGW-w64, including its getopt_long implementation,
+with make and a shell.  The makefile supplies -municode for the wmain entry
+point and -lwinmm for audio.  MSVC is not currently supported.
+
+wmain converts the wide argument vector to UTF-8 before parsing options.
+An attached console is temporarily set to UTF-8 output and restored on
+normal return.  Redirected lyrics remain UTF-8.  File operations still use
+the narrow C interfaces; arbitrary Unicode filenames are not supported.
+Use ASCII names for WAVE files, CSV files, and stem directories.
+
+The PCM interface
+-----------------
+
+src/audio.h is the public interface.  play_audio() is a wrapper around
+play_audio_with_progress() with no progress callback.  Both calls block
+until playback and normal draining have finished, or an error is reported.
+
+  - Input is interleaved left/right float PCM at the given sample rate.
+    A frame contains two samples.  Samples must be finite, with nominal
+    range [-1, 1].  The caller owns the buffer and keeps it alive until
+    the call returns.  A backend must not change it.
+
+  - A null, empty, or "default" device name chooses the backend default.
+    Other names have native meanings described above.  Device selection
+    must not change the requested channel count or sample rate silently.
+
+  - Zero means success.  A nonzero return follows a diagnostic on standard
+    error.  There is no guarantee that all backends preserve errno.
+    A zero-frame request succeeds without opening a device or invoking
+    the progress callback.
+
+  - The optional callback runs on the calling thread, never on a real-time
+    audio callback thread.  Its argument is the number of frames consumed,
+    not the number submitted.  Positions must be monotonic and no greater
+    than the input frame count.  A successful nonempty playback reports
+    the final frame count after draining.  Callback code should return
+    promptly; it must not block while waiting for playback to finish.
+
+src/audio/pcm.h is private to the backends.  pcm.c validates inputs and
+provides sample conversion, monotonic time, a short sleep, and monotonic
+progress reporting.  Exactly one backend implements pcm_play().  The
+16-bit converter clips to [-1, 1] and emits explicit little-endian bytes;
+it must not be replaced by host-endian stores on big-endian systems.
+
+Adding a backend
+----------------
+
+Put the implementation in src/audio/, under a compiler-target guard.  Add
+its object to the makefile and exclude its target in null.c.  Add linker
+flags only when the platform requires a system library.  Keep platform
+headers out of the renderer and public audio interface.
+
+Check the device format returned by the driver.  Handle partial writes,
+interrupted calls, and nonblocking retries where the interface permits
+them.  Keep byte counts distinct from sample and frame counts, and check
+conversions to narrower driver fields.  Bound waits for stalled playback.
+Use the device's consumption position rather than wall time to drive
+lyrics.  Do not report normal completion merely because all input has
+been queued.
+
+Callback-based interfaces require particular care on failure: neither the
+sample storage nor callback state may be freed while the driver still
+owns it.  Stop or reset the device, release prepared buffers, and remove
+callbacks in the order required by that interface.  Error cleanup must
+not report a successful drain.
+
+Run make check after changing common code.  It exercises score and signal
+properties without opening an audio device, so it does not validate a new
+backend.  A useful eventual playback test is a short clip, followed by a
+clip shorter than one driver buffer, checking both drain completion and
+monotonic progress.  Report the actual target, compiler, driver, and tests
+used when submitting a port.

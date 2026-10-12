@@ -1,0 +1,330 @@
+.TH ALOHA-OE 6 "October 13, 2026" "aloha-oe" "Games Manual"
+.SH NAME
+aloha-oe \- synthesize and play Aloha 'Oe
+.SH SYNOPSIS
+.B aloha-oe
+.RI [ options ]
+.SH DESCRIPTION
+.B aloha-oe
+plays an arrangement of Queen Liliuokalani's Aloha 'Oe, with timing and
+instrumentation based in part on Johnny Cash's recording.
+The score and synthesis parameters are compiled into the program.
+No sound samples, external score files, or network services are used.
+.PP
+The default arrangement is instrumental, in E major and 4/4 time.
+It lasts about 180 seconds and includes guitar, bass, and slide guitar.
+A synthetic singing voice, piano, and percussion are also available.
+The voice is a small formant synthesizer; its pronunciation and likeness
+to the recorded singer are approximate.
+.PP
+The program renders stereo PCM in memory before playback.
+It can also write a RIFF/WAVE file or separate instrument tracks.
+Exporting a file does not disable playback; use
+.B \-n
+for an unattended render.
+.SH OPTIONS
+Short options may be combined.
+Long options accept either
+.BI \-\-option= argument
+or
+.BI "\-\-option " argument .
+There are no positional arguments.
+When a setting is repeated, its last value is used.
+.TP
+.BR \-h , " \-\-help"
+Print a summary of the options and exit.
+.TP
+.BI "\-o, \-\-wav " file
+Write the rendered mix as stereo, signed 16-bit little-endian PCM
+in a RIFF/WAVE file.
+An existing file is replaced.
+The name
+.B \-
+is treated as an ordinary filename.
+.TP
+.BR \-n , " \-\-no-play"
+Do not open an audio device.
+Rendering and requested exports still take place.
+.TP
+.BI "\-s, \-\-section " name
+Select
+.BR full ,
+.BR verse ,
+or
+.BR chorus .
+The default is
+.BR full .
+.TP
+.BI "\-b, \-\-bpm " number
+Set the score's quarter-note tempo, from 25 through 150 beats per minute.
+The default is 49, corresponding to an eighth-note pulse of 98.
+Setting this option to 98 doubles the default speed.
+Fractional values are accepted.
+.TP
+.BI "\-t, \-\-transpose " semitones
+Transpose the arrangement by an integer from \-12 through 12,
+relative to E major.
+The default is zero.
+.TP
+.BI "\-v, \-\-volume " number
+Set the normalized peak amplitude, from 0 through 0.9.
+The default is 0.85.
+This changes the rendered signal, not the system volume.
+.TP
+.BI "\-r, \-\-rate " rate
+Use a sample rate of 22050, 44100, or 48000 Hz.
+The default is 48000.
+The audio device must accept the selected format and rate.
+.TP
+.BI "\-\-seconds " number
+Limit output to the given number of seconds, from 0.05 through 1200.
+The output is shortened if the selected section ends first.
+A short fade is applied at the end of a preview.
+.TP
+.BI "\-\-offset " number
+Begin output this many seconds into the selected section.
+The value must be from 0 through 1200 and less than the section's duration.
+Earlier sound is rendered internally to preserve held notes and reverb;
+a short fade is applied at the new beginning.
+.TP
+.B \-\-dry
+Disable the generated room reverb.
+.TP
+.B \-\-lead-only
+Omit the accompaniment and instrumental transitions.
+Retain the score melody in the selected mode.
+.TP
+.BI "\-m, \-\-mode " name
+Select
+.BR instrumental ,
+.BR vocal ,
+or
+.BR ensemble .
+The default is
+.BR instrumental .
+In vocal mode the synthesizer sings the melody over the accompaniment,
+with slide guitar retained for instrumental passages.
+Ensemble mode adds a quieter slide-guitar melody alongside the voice.
+.TP
+.BR \-V , " \-\-voice"
+Equivalent to
+.BR "\-\-mode vocal" .
+.TP
+.BR \-e , " \-\-ensemble"
+Equivalent to
+.BR "\-\-mode ensemble" .
+.TP
+.BR \-l , " \-\-lyrics"
+Write each word to standard output as its scheduled onset is reached
+during playback.
+Each word is flushed immediately.
+This is enabled by default in vocal and ensemble modes when both the
+vocal gain and master volume are nonzero.
+It may also be enabled in instrumental mode.
+.TP
+.B \-\-no-lyrics
+Suppress lyric output.
+.TP
+.BI "\-\-voice-style " name
+Select
+.B baritone
+(the default) or
+.BR retro .
+Retro mode limits the voice bandwidth and applies approximately
+11025 Hz sample holding and 7-bit quantization.
+The accompaniment retains its normal precision.
+.TP
+.BI "\-\-ipa " text
+Sing a phrase given in the supported subset of UTF-8 IPA.
+This replaces the song with a single vocal note on E3,
+subject to
+.BR \-\-transpose .
+The default duration is six seconds; use
+.B \-\-seconds
+to change it.
+The text is a phonetic transcription, not English text to be converted
+into speech.
+Unsupported symbols and malformed UTF-8 are rejected.
+The supported symbols are listed in doc/NOTES in the source distribution.
+.TP
+.BI "\-\-guitar-gain " number
+Set the guitar gain, from 0 through 2.
+The default is 1.
+.TP
+.BI "\-\-bass-gain " number
+Set the bass gain, from 0 through 2.
+The default is 1.
+.TP
+.BI "\-\-steel-gain " number
+Set the slide-guitar gain, from 0 through 2.
+The default is 1.
+.TP
+.BI "\-\-piano-gain " number
+Set the piano gain, from 0 through 2.
+The default is 0.
+.TP
+.BI "\-\-percussion-gain " number
+Set the percussion gain, from 0 through 2.
+The default is 0.
+.TP
+.BI "\-\-vocal-gain " number
+Set the voice gain, from 0 through 2.
+The default is 1.
+This option does not enable a vocal mode by itself.
+.TP
+.BI "\-\-stems " directory
+Write six WAVE files named
+.BR guitar.wav ,
+.BR bass.wav ,
+.BR steel.wav ,
+.BR piano.wav ,
+.BR percussion.wav ,
+and
+.BR vocal.wav .
+Create the directory if necessary; its parent must already exist.
+Existing files with these names are replaced.
+All tracks and the mix use a shared master gain, preserving their relative
+levels and leaving disabled parts silent.
+The largest peak among the mix and tracks determines this gain, so a mix
+exported with stems can be quieter than one exported on its own.
+.TP
+.BI "\-\-score " file
+Write scheduled note events as CSV, including note times, pitches,
+levels, panning, and articulation parameters.
+The export covers the whole selected section, regardless of
+.B \-\-offset
+or
+.BR \-\-seconds .
+An existing file is replaced.
+.TP
+.BI "\-d, \-\-device " name
+Select the native output device; see
+.B DEVICES
+below.
+The word
+.B default
+or an empty name selects the platform default.
+.TP
+.B \-\-check
+Run the built-in score, tuning, timing, and signal-bounds checks, then exit.
+These checks use fixed reference settings and do not open an audio device.
+Other rendering options have no effect on the checks.
+.SH LYRICS
+Lyric timing follows playback progress reported by the audio backend.
+It does not follow the time at which samples are submitted to a buffer.
+Timing resolution and downstream latency depend on the device and backend.
+NetBSD reports track consumption before downstream mixing and hardware
+buffering; some Windows drivers permit only buffer-completion updates.
+.PP
+Words are written once, with a newline at the end of each phrase.
+Seeking into a held word prints that word; words already completed are
+skipped.
+Instrumental passages produce no text.
+No lyrics are printed with
+.B \-\-no-play
+or during a standalone
+.B \-\-ipa
+audition.
+Messages about rendering and playback go to standard error.
+.SH DEVICES
+The device argument is platform-specific.
+There is no device-listing option.
+.TP
+.B Darwin (macOS)
+A CoreAudio device UID.
+Omitting the argument uses the default output through AudioQueue.
+.TP
+.B FreeBSD and DragonFly BSD
+An OSS device pathname; the default is
+.BR /dev/dsp .
+.TP
+.B Linux
+An ALSA kernel PCM playback node; the default is
+.BR /dev/snd/pcmC0D0p .
+ALSA library names such as
+.B hw:0
+and plugin configuration files are not interpreted.
+The device must support stereo S16_LE at the requested rate, with
+5--40 ms periods and a 50--250 ms buffer.
+.TP
+.B Windows
+A nonnegative decimal waveOut device number, such as
+.BR 0 .
+The default uses
+.BR WAVE_MAPPER .
+.TP
+.B NetBSD 9 and later
+An audio device pathname; the default is
+.BR /dev/audio .
+.TP
+.B OpenBSD
+An audio device pathname; the default is
+.BR /dev/audio0 .
+.PP
+The native Unix backends require permission to open the device.
+Direct hardware access, particularly on Linux and OpenBSD, may conflict
+with a running sound server.
+The program does not stop other audio clients or provide software mixing
+or resampling for these devices.
+Unsupported formats and underruns may cause playback to fail.
+WAVE export remains available with
+.BR \-\-no-play .
+.SH EXAMPLES
+Play a short chorus with voice and instruments:
+.PP
+.nf
+    aloha-oe -e -s chorus --seconds 24
+.fi
+.PP
+Write an instrumental arrangement without opening an audio device:
+.PP
+.nf
+    aloha-oe -n -o aloha.wav
+.fi
+.PP
+Export the mix and separate tracks from a passage:
+.PP
+.nf
+    aloha-oe -ne --offset 48 --seconds 28 \\
+        --stems tracks -o mix.wav
+.fi
+.PP
+Audition a phrase using only the ASCII portion of the IPA alphabet:
+.PP
+.nf
+    aloha-oe --ipa 'a lo ha oe' --voice-style retro
+.fi
+.PP
+Play through the first Linux hardware PCM device at 44100 Hz:
+.PP
+.nf
+    aloha-oe -r 44100 -d /dev/snd/pcmC0D0p
+.fi
+.SH EXIT STATUS
+Zero indicates success.
+A status of 2 indicates an invalid option, an invalid IPA phrase, or an
+invalid preview position.
+A status of 1 indicates a rendering, export, playback, or check failure.
+.SH FILES
+No configuration files or runtime data files are required.
+The program does not read recorded audio or MIDI files.
+.SH NOTES
+The default tempo is a measured approximation to the recording.
+The arrangement does not reproduce every ornament or local change of tempo.
+The vocal synthesizer is deliberately small and has limited intelligibility.
+.PP
+A full render at 48000 Hz needs about 69 MB for its stereo floating-point
+sample buffer; stem export needs additional working storage.
+.PP
+Builds, checks, and playback have been tested on macOS (arm64).
+The other native backends have not yet been tested on their target systems.
+.PP
+On Windows, the MinGW-w64 entry point converts command-line arguments
+to UTF-8 and restores the console output code page on normal return.
+File access still uses narrow-character C interfaces; use ASCII export
+pathnames.
+.SH SEE ALSO
+The README and INSTALL files in the source distribution,
+doc/NOTES for the arrangement and phoneme inventory,
+doc/REFERENCES for source material,
+and doc/PORTING for backend requirements and the PCM interface.

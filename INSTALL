@@ -1,0 +1,116 @@
+Building aloha-oe
+=================
+
+You need a C11 compiler, make, and the development files for your
+system's C library and audio interfaces.  GNU make and BSD make are
+supported.  No configure script is needed.
+
+From the source directory, run:
+
+        make
+        make check
+
+The program is left in this directory.  It may be run here without
+installation.  The check target examines the score; it does not open
+an audio device.
+
+The usual make variables may be set on the command line.  For example:
+
+        make CC=clang CFLAGS='-g -O0 -std=c11 -Wall -Wextra'
+
+CPPFLAGS, LDFLAGS, and LDLIBS are also available.  LDLIBS defaults to
+-lm.  Run make clean before changing compilers or build options; make
+does not record the options used to compile an object file.
+
+
+System notes
+============
+
+The compiler's predefined macros select the playback code.  SYSTEM
+selects additional linker options and defaults to the result of
+uname -s.  Set it explicitly when cross-compiling.
+
+macOS (Darwin)
+        Install the Apple command-line development tools.  The program
+        links with AudioToolbox and CoreFoundation.  Build and playback
+        have been checked on macOS.
+
+FreeBSD and DragonFly BSD
+        The program uses the OSS interface in <sys/soundcard.h> and
+        writes to /dev/dsp by default.
+
+Linux
+        The kernel ALSA headers, including <sound/asound.h>, must be
+        installed.  The program opens /dev/snd/pcmC0D0p by default.
+        It does not link with libasound or contact a sound server.
+
+NetBSD and OpenBSD
+        The program uses each system's <sys/audioio.h> interface.
+        The default devices are /dev/audio and /dev/audio0,
+        respectively.
+
+Windows
+        Use MinGW-w64, with its getopt_long implementation, from a
+        shell providing make and the usual Unix commands.  MSVC is
+        not supported by this makefile.  WinMM is the only additional
+        Windows library.  For a typical cross build:
+
+        make CC=x86_64-w64-mingw32-gcc SYSTEM=Windows_NT \
+             PROGRAM=aloha-oe.exe
+
+        The link uses -municode for the wide-character entry point and
+        -lwinmm for playback.  The default output is WAVE_MAPPER.
+
+Other systems
+        If the C library supplies the required interfaces, the null
+        playback backend permits WAV output with --no-play --wav FILE.
+        A new playback backend belongs in src/audio; see doc/PORTING.
+
+Only macOS has been tested at run time.  The remaining playback
+backends have been reviewed against their system interfaces.
+
+Direct device access requires the appropriate permissions.  A sound
+server or another application may already have the device open.  Use
+--device to select a different device.  The Unix device backends
+require stereo, signed 16-bit little-endian samples at the requested
+rate; they reject a changed rate rather than alter the pitch.
+
+
+Installation
+============
+
+The default prefix is /usr/local.  Installation copies the executable
+to PREFIX/bin and the manual page to PREFIX/share/man/man6:
+
+        make install
+
+Set PREFIX to change both locations, or set BINDIR and MANDIR
+separately.  MANDIR names the directory above man6.
+
+For a package build, DESTDIR provides a staging directory:
+
+        make install PREFIX=/usr DESTDIR=/tmp/aloha-package
+
+This installs beneath /tmp/aloha-package/usr without changing paths
+compiled into the program.  No data files are required at run time.
+
+INSTALL, INSTALL_PROGRAM, and INSTALL_DATA may be overridden.  The
+defaults are install, install -m 755, and install -m 644.  To remove an
+installation, use make uninstall with the same path variables and
+PROGRAM setting used to install it.  Empty directories are retained.
+
+
+Source distributions
+====================
+
+        make dist
+
+This makes aloha-oe.tar.gz from the files listed in MANIFEST, with a
+single aloha-oe directory at its root.  The archive contains source and
+documentation.  TAR, DISTNAME, and DISTFILE may be set on the make command
+line.  The dist target needs mktemp and GNU tar or bsdtar.  Archives use
+the ustar format with numeric ownership; owner names and extended file
+attributes are omitted.
+
+make clean removes the program and object files.  It leaves archives
+and any audio files you have made alone.

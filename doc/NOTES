@@ -1,0 +1,192 @@
+aloha-oe -- notes on the score and synthesizer
+
+The score
+---------
+
+Aloha 'Oe was composed by Queen Liliuokalani.  The melody in
+src/melody.h follows the upper vocal line of J. Bodewalt Lampe's
+1912 arrangement, with the W. A. Quincke edition as a second source.
+Both printed scores are in A-flat major, in common time, marked
+Moderato.  Neither gives a numerical metronome marking.
+
+The program transposes the melody to E major.  One tick is a sixteenth
+note; four ticks make one notated quarter note.  The verse, including
+its pickup, occupies 130 ticks; the chorus occupies 126.  Together they
+make sixteen bars of 4/4.  The verse rest and the chorus pickup share
+a bar.  Padding each section to eight complete bars would spoil this
+join.  Sample positions are calculated from absolute score time, so
+rounding errors do not accumulate from one note to the next.
+
+Ties, dotted notes, rests and sixteenth notes are retained.  The
+optional turn in the third verse bar is omitted.  The last chorus
+note is Lampe's dotted half under a fermata, played for its written
+duration.  Quincke instead has a half note followed by a quarter rest.
+The printed fermata does not prescribe an additional holding time.
+
+The OpenScore Lieder transcription of the Quincke edition provides
+a machine-readable source for the melody.  Lampe ties several verse
+notes which Quincke repeats; the final chorus note also differs as
+described above.  The last eighth note of chorus bar 7 is G4 in the
+printed key, or D-sharp4 in the program's key.
+
+The score is compiled into the program.  No XML or MIDI reader is
+needed to build or run it.  Integer pitch numbers in the source are
+an equal-tempered notation, with A4 at 440 Hz.
+
+Arrangement
+-----------
+
+Johnny Cash's recording on American VI: Ain't No Grave supplied the
+reference key, pace and broad arrangement.  The default tempo is 49
+notated quarter notes per minute, giving 98 eighth notes per minute.
+The --bpm option always counts quarters; setting it to 98 doubles
+the speed.  The recorded accompaniment was estimated at roughly
+98-99 eighth notes per minute over the main sections.
+
+At the default tempo the arrangement runs as follows.  Times include
+the pickups and refer to the generated performance.
+
+        Introduction                 0.000 s
+        Verse                        9.796 s
+        First chorus                49.592 s
+        Instrumental chorus         88.776 s
+        Second chorus              127.959 s
+        Coda                       167.755 s
+
+There are 145 notated quarter notes, followed by about 2.249 seconds
+of decay, for a total of 179.800 seconds.  E, A and B7 supply the main
+accompaniment.  These section timings do not imply a note-for-note
+transcription of the recording or a reproduction of its free tempo.
+
+David R. Ferguson's account of the session identifies Pat McLaughlin
+on acoustic guitar and Jack Clement on slide guitar, with some guitar
+by Cash.  He describes a quiet, close vocal and an album without drums.
+The arrangement here uses a soft strummed part on the left, picked
+eighth notes on the right, and slide guitar between the sung phrases.
+The quiet bass part is an addition; the account does not assign bass
+to this particular track.  Piano and percussion are optional and
+are silent at their default gains.
+
+The introduction includes descending G-sharp to F-sharp slides and
+short upward slides to A and G-sharp.  A quieter descending response
+appears in the instrumental chorus.  Their timing and the connecting
+notes are approximate; this is an arrangement, not an exact
+transcription of the recorded slide part.  No part of the recording
+is included in or read by the program.
+
+Synthesis
+---------
+
+The renderer adds damped harmonic oscillators.  Each partial has its
+own decay.  Smooth attacks and releases avoid discontinuities, and
+partials are cut off below the Nyquist frequency.  Guitar adds a
+simple body resonance and pick noise.  The steel part uses a softer
+attack, vibrato and slides.  A slide integrates a smooth frequency
+curve, preserving phase and arriving at the scored destination pitch.
+Short delays and feedback provide the room sound.
+
+Direct harmonics make the pitch easy to set and check.  A
+Karplus-Strong string would need compensation for the phase delay
+of its loop filter.  The present model does not attempt a complete
+physical model of a guitar, its body, or the recording room.
+
+The singing voice uses a band-limited derivative of an analytic
+glottal pulse, three moving formants and a low-frequency branch.
+Breath, irregular voicing and a small phoneme planner supply the
+remaining articulation.  The source, timing rules and tract targets
+are approximations; they were not measured from Cash's vocal tract.
+No recorded phonemes, sampled instruments or trained voice model
+are used.
+
+Each sung note has an IPA syllable.  The planner reserves short
+intervals for consonants and gives most of the note to its vowel.
+Diphthongs, nasals, liquids, stops and fricatives have separate
+targets.  Noise level is independent of voicing.  A fricative fades
+at its own band frequency on entering a vowel, rather than sweeping
+that band down through the vowel.  This keeps the consonants from
+overwhelming the sustained voice.
+
+The retro voice applies a 3400 Hz low-pass filter, approximately
+11025 Hz sample-and-hold, and 127 signed quantization levels to the
+generated vocal part.  Accompaniment retains its usual precision.
+This is a deliberately coarse speech sound, not an emulation of
+the NES audio hardware.  In particular, the NES DMC plays sample
+data; it does not generate speech from IPA.
+
+Pronunciation remains approximate, and the voice only suggests a
+low, rough male singer.  The IPA option auditions supplied phonemes;
+it is not a general text-to-speech system.
+
+IPA input
+---------
+
+The --ipa argument is UTF-8.  These are the supported speech sounds:
+
+        Vowels:       a ɑ æ ɛ e ɪ i ɔ o ʊ u ə ʌ ɜ
+        Stops:        p b t d k g ɡ ʔ
+        Fricatives:   s z f v θ ð ʃ ʒ h
+        Nasals:       m n ŋ
+        Approximants: l r ɹ w j
+
+The letters g and ɡ select the same sound, as do r and ɹ.  The r sound
+is an approximant, not a trill.  Consecutive vowels form a transition;
+the first of a vowel pair receives most of the available sustain.
+There are no recorded diphthongs or affricates.
+
+Primary stress ˈ (U+02C8) and secondary stress ˌ (U+02CC) increase
+the share of time assigned to the next vowel.  Length ː (U+02D0),
+half-length ˑ (U+02D1), and ASCII colon increase the preceding
+vowel's share.  These marks divide the existing note duration;
+they do not extend the note or change its pitch.
+
+Spaces introduce short pauses.  Tabs, newlines, carriage returns
+and non-breaking spaces are treated as spaces.  Repeated, leading
+and trailing spaces do not add extra pauses.  These separators
+and punctuation marks are accepted but do not produce a sound:
+
+        . , - ' ( ) [ ] /
+        U+2019       right single quotation mark
+        U+0361       combining double inverted breve (upper tie)
+        U+035C       combining double breve below (lower tie)
+
+Other symbols and malformed UTF-8 are rejected.  The limit is 96
+segments, counting internal pauses.  The planner accepts consonant
+sequences, but useful singing examples normally include a vowel.
+The manual page gives the audition options and defaults.
+
+Rendering and lyric timing
+-------------------------
+
+The complete passage is rendered as interleaved stereo floating-point
+PCM before playback.  The default full song at 48 kHz requires about
+69 MB for this buffer.  Volume selects the rendered peak, rather than
+changing the system mixer.  A mix and its exported parts share the
+same master gain.  Each part retains its relative level, room sound
+and excerpt fades; a disabled part is exported as silence.
+
+An offset keeps earlier note envelopes and reverberation before
+cutting the requested excerpt.  The score export describes the full
+selected section even when the audio excerpt is shortened.
+
+The 71 lyric words use the same score clock as the notes.  A word is
+written to standard output once, then flushed; phrases end with a
+newline.  An excerpt beginning inside a held word prints that word.
+Playback progress comes from the selected audio driver and is polled
+by the calling thread, not printed from an audio callback.  Driver
+buffering limits the accuracy: NetBSD reports channel-buffer progress,
+and Windows may fall back to completed buffers if no position is
+available.  Pure file rendering has no real-time lyric output.
+
+Checks
+------
+
+make check runs the built-in score and synthesis checks.  They cover
+the score grid and duration, sample rounding, rendered guitar/bass/
+piano pitch, and full ensemble length, peak and finite samples.
+Slides and voice deliberately vary their instantaneous pitch.
+
+These checks do not assess the intelligibility of the voice or the
+resemblance to the recording.  Build and playback have been tested
+on macOS.  The other audio back ends have not been tested on their
+target systems.  See INSTALL for device requirements and port-specific
+restrictions.

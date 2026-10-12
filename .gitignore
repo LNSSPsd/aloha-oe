@@ -1,0 +1,11 @@
+.DS_Store
+._*
+*.o
+*.dSYM/
+*~
+*.swp
+/aloha-oe
+/aloha-oe.exe
+/aloha-oe*.tar.gz
+/*.wav
+/*.csv

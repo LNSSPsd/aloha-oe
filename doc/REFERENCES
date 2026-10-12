@@ -1,0 +1,116 @@
+aloha-oe -- sources and references
+
+These are sources consulted in writing the score and synthesizer,
+and in checking the system audio interfaces.  The program does not
+fetch them at build time or run time.
+
+Music
+-----
+
+Queen Liliuokalani, Aloha 'Oe.  J. Bodewalt Lampe arrangement,
+Jerome H. Remick & Co., 1912, score pages 2-3.  The upper vocal line
+is the principal source for src/melody.h.  IMSLP 786918.
+https://s9.imslp.org/files/imglnks/usimg/3/38/IMSLP786918-PMLP58215-Liliuokalani-Aloha_Oe.pdf
+
+Aloha 'Oe, W. A. Quincke & Co., 1912, score pages 2-3.
+Used to check the Lampe transcription.  IMSLP 26121.
+https://s9.imslp.org/files/imglnks/usimg/9/9f/IMSLP26121-PMLP58215-Liliuokalani_AlohaOe.pdf
+
+OpenScore Lieder, lc6650166.mscx, transcribed from IMSLP 26121.
+The file identifies its copyright status as OpenScore (CC0).
+https://github.com/OpenScore/Lieder/blob/main/scores/Liliuokalani%2C_Queen_of_the_Hawaiian_Islands/_/Aloha_Oe/lc6650166.mscx
+OpenScore's account of its transcription and checking procedure:
+https://fourscoreandmore.org/scores-of-scores/notes-for-users/
+
+Johnny Cash, Aloha Oe, American VI: Ain't No Grave.
+Reference for the key, tempo and arrangement.
+Official track page and Apple Music preview:
+https://www.johnnycash.com/track/aloha-oe-2/
+https://music.apple.com/us/song/1440802266
+
+David R. Ferguson, interview on recording and mixing American VI.
+Source for the account of the guitars and vocal recording.
+https://www.soundonsound.com/techniques/secrets-mix-engineers-david-r-ferguson
+
+Instrument synthesis
+--------------------
+
+Julius O. Smith, Physical Audio Signal Processing,
+"Digital Sinusoid Generators".  Oscillators as two-dimensional
+rotations, used for the harmonic renderer.
+https://ccrma.stanford.edu/~jos/pasp/Digital_Sinusoid_Generators.html
+
+David Politzer, paper on plucked strings.  Background on decomposing
+the string motion into damped modes.
+https://www.its.caltech.edu/~politzer/plucked-string-AJP.pdf
+
+Extensions of the Karplus-Strong Plucked-String Algorithm.
+Background for the alternative delay-loop method and its tuning.
+The program uses direct harmonic synthesis instead.
+https://musicweb.ucsd.edu/~trsmyth/papers/KSExtensions.pdf
+
+Speech synthesis
+----------------
+
+Dennis H. Klatt, Journal of the Acoustical Society of America 67
+(1980), 971-995.  DOI: 10.1121/1.383940.  Background on formant
+speech synthesis.
+https://www.fon.hum.uva.nl/david/ma_ssp/doc/Klatt-1980-JAS000971.pdf
+
+Csound reference manual, "Formant Values".  Reference values for
+vowel formant frequencies and bandwidths.  No Csound code or library
+is used.
+https://csound.com/docs/manual/MiscFormants.html
+
+Daniel Jurafsky and James H. Martin, Speech and Language Processing,
+"Acoustic Phonetics and Signals".  Source/filter background.
+https://web.stanford.edu/~jurafsky/slp3/old_aug24/H.pdf
+
+KTH speech research papers.  Background on glottal sources,
+aspiration and formant synthesis.
+https://www.speech.kth.se/~rolf/papers/wwnasqpsr.pdf
+https://www.speech.kth.se/qpsr/1991/1991_32_2-3_001-010.pdf
+
+SAM, SAM2600, Tiny Speech Synth and Pink Trombone.  Examples of
+compact speech synthesis, phoneme scheduling and source/filter
+models.  The IPA planner and its parameters were written separately;
+no SAM code, phoneme recordings or SAM parameter tables are included.
+https://github.com/s-macke/SAM
+https://rossumur.github.io/SAM2600/
+https://heckmeck.de/demoscene/tiny-speech-synth-js/
+https://github.com/IMAGINARY/pink-trombone
+
+NESdev, APU DMC.  Background on the sample-playback hardware often
+associated with early game speech.  The retro voice is not a DMC
+emulation and contains no sampled speech.
+https://www.nesdev.org/wiki/APU_DMC
+
+System audio interfaces
+-----------------------
+
+Apple Audio Queue Programming Guide, "Playing Audio", and the
+AudioQueueGetCurrentTime reference.
+https://developer.apple.com/library/archive/documentation/MusicAudio/Conceptual/AudioQueueProgrammingGuide/AQPlayback/PlayingAudio.html
+https://developer.apple.com/documentation/audiotoolbox/audioqueuegetcurrenttime(_:_:_:_:)
+
+FreeBSD pcm(4); DragonFly BSD sound(4).
+https://man.freebsd.org/cgi/man.cgi?format=html&query=pcm&sektion=4
+https://man.dragonflybsd.org/?command=sound&section=4
+
+Linux ALSA user/kernel interface and PCM state handling.
+https://github.com/torvalds/linux/blob/master/include/uapi/sound/asound.h
+https://github.com/torvalds/linux/blob/master/sound/core/pcm_native.c
+
+Microsoft WinMM waveOutOpen reference and related waveOut interfaces.
+https://learn.microsoft.com/en-us/windows/win32/api/mmeapi/nf-mmeapi-waveoutopen
+
+NetBSD audio(4), including the NetBSD 9 and later buffer accounting.
+https://man.netbsd.org/audio.4
+
+OpenBSD audio(4) and the kernel audio buffer implementation.
+https://man.openbsd.org/audio.4
+https://github.com/openbsd/src/blob/master/sys/dev/audio.c
+
+COPYING covers this program's original code.  The references above
+retain their own terms.  Neither the commercial recording nor the
+downloaded score files are included in the distribution.
